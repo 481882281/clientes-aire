@@ -7,46 +7,71 @@
 <style>
 *{box-sizing:border-box}
 body{
- font-family:Arial;
+ font-family:Arial, sans-serif;
  background:#f2f2f2;
  padding:15px;
  margin:0;
 }
-h1{text-align:center;font-size:22px}
+h1{
+ text-align:center;
+ font-size:22px;
+ margin-bottom:10px;
+}
 .box{
  background:white;
  padding:15px;
- border-radius:10px;
- max-width:500px;
+ border-radius:14px;
+ max-width:520px;
  margin:auto;
+ box-shadow:0 4px 10px rgba(0,0,0,.08);
 }
 input,textarea,button{
  width:100%;
  padding:14px;
  margin-top:10px;
  font-size:16px;
+ border-radius:10px;
+ border:1px solid #ccc;
 }
-textarea{min-height:80px}
-button{border:none;border-radius:8px}
-button:active{opacity:.8}
+textarea{min-height:90px}
+button{
+ border:none;
+ font-weight:bold;
+}
+button:active{opacity:.85}
+
+#buscar{
+ background:#fafafa;
+}
 
 ul{list-style:none;padding:0;margin:0}
 li{
- background:#eee;
- padding:12px;
- margin-top:12px;
- border-radius:10px;
+ background:#f0f0f0;
+ padding:14px;
+ margin-top:14px;
+ border-radius:14px;
  font-size:15px;
+ line-height:1.4;
 }
 .actions{
  display:flex;
  gap:10px;
- margin-top:10px;
+ margin-top:12px;
 }
-.edit{background:#007bff;color:white}
-.del{background:#e53935;color:white}
+.edit{
+ background:#007bff;
+ color:white;
+}
+.del{
+ background:#e53935;
+ color:white;
+}
+
+/* Optimizado iPhone */
 @media (max-width:480px){
  h1{font-size:20px}
+ input,textarea,button{font-size:17px}
+ li{font-size:16px}
 }
 </style>
 </head>
@@ -61,12 +86,16 @@ li{
 </div>
 
 <div class="box" id="app" style="display:none">
+
+<input id="buscar" placeholder="🔍 Buscar cliente..." oninput="cargar()">
+
 <input id="nombre" placeholder="Nombre y apellido">
 <input id="ubicacion" placeholder="Ubicación">
 <input id="equipo" placeholder="Marca y modelo">
 <input id="telefono" placeholder="Teléfono">
 <input type="date" id="fecha">
 <textarea id="obs" placeholder="Observaciones"></textarea>
+
 <button onclick="guardar()">Guardar cliente</button>
 
 <ul id="lista"></ul>
@@ -94,10 +123,14 @@ function guardar(){
   obs:obs.value
  };
  let arr=JSON.parse(localStorage.getItem("clientes"))||[];
- if(editIndex!==null){arr[editIndex]=cliente;editIndex=null;}
- else arr.push(cliente);
+ if(editIndex!==null){
+  arr[editIndex]=cliente;
+  editIndex=null;
+ } else arr.push(cliente);
+
  localStorage.setItem("clientes",JSON.stringify(arr));
- limpiar();cargar();
+ limpiar();
+ cargar();
 }
 
 function editar(i){
@@ -114,6 +147,7 @@ function editar(i){
 }
 
 function borrar(i){
+ if(!confirm("¿Borrar este cliente?")) return;
  let arr=JSON.parse(localStorage.getItem("clientes"));
  arr.splice(i,1);
  localStorage.setItem("clientes",JSON.stringify(arr));
@@ -122,16 +156,21 @@ function borrar(i){
 
 function cargar(){
  lista.innerHTML="";
+ let filtro=buscar.value.toLowerCase();
  let arr=JSON.parse(localStorage.getItem("clientes"))||[];
+
  arr.forEach((c,i)=>{
+  let texto=(c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
+  if(!texto.includes(filtro)) return;
+
   lista.innerHTML+=`
   <li>
    <b>${c.nombre}</b><br>
    📍 ${c.ubicacion}<br>
    ❄️ ${c.equipo}<br>
    📞 ${c.telefono}<br>
-   📅 ${c.fecha||"—"}<br>
-   📝 ${c.obs}
+   📅 ${c.fecha || "—"}<br>
+   📝 ${c.obs || ""}
    <div class="actions">
     <button class="edit" onclick="editar(${i})">Editar</button>
     <button class="del" onclick="borrar(${i})">Borrar</button>
@@ -141,7 +180,12 @@ function cargar(){
 }
 
 function limpiar(){
- nombre.value=ubicacion.value=equipo.value=telefono.value=fecha.value=obs.value="";
+ nombre.value="";
+ ubicacion.value="";
+ equipo.value="";
+ telefono.value="";
+ fecha.value="";
+ obs.value="";
 }
 </script>
 
