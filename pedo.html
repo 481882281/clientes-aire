@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Clientes Aire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box}
+body{
+ font-family:Arial;
+ background:#f2f2f2;
+ padding:15px;
+ margin:0;
+}
+h1{text-align:center;font-size:22px}
+.box{
+ background:white;
+ padding:15px;
+ border-radius:10px;
+ max-width:500px;
+ margin:auto;
+}
+input,textarea,button{
+ width:100%;
+ padding:14px;
+ margin-top:10px;
+ font-size:16px;
+}
+textarea{min-height:80px}
+button{border:none;border-radius:8px}
+button:active{opacity:.8}
+
+ul{list-style:none;padding:0;margin:0}
+li{
+ background:#eee;
+ padding:12px;
+ margin-top:12px;
+ border-radius:10px;
+ font-size:15px;
+}
+.actions{
+ display:flex;
+ gap:10px;
+ margin-top:10px;
+}
+.edit{background:#007bff;color:white}
+.del{background:#e53935;color:white}
+@media (max-width:480px){
+ h1{font-size:20px}
+}
+</style>
+</head>
+
+<body>
+
+<h1>Clientes – Aire Acondicionado</h1>
+
+<div class="box" id="login">
+<input type="password" id="pin" placeholder="PIN">
+<button onclick="entrar()">Entrar</button>
+</div>
+
+<div class="box" id="app" style="display:none">
+<input id="nombre" placeholder="Nombre y apellido">
+<input id="ubicacion" placeholder="Ubicación">
+<input id="equipo" placeholder="Marca y modelo">
+<input id="telefono" placeholder="Teléfono">
+<input type="date" id="fecha">
+<textarea id="obs" placeholder="Observaciones"></textarea>
+<button onclick="guardar()">Guardar cliente</button>
+
+<ul id="lista"></ul>
+</div>
+
+<script>
+const PIN="1234";
+let editIndex=null;
+
+function entrar(){
+ if(pin.value===PIN){
+  login.style.display="none";
+  app.style.display="block";
+  cargar();
+ } else alert("PIN incorrecto");
+}
+
+function guardar(){
+ let cliente={
+  nombre:nombre.value,
+  ubicacion:ubicacion.value,
+  equipo:equipo.value,
+  telefono:telefono.value,
+  fecha:fecha.value,
+  obs:obs.value
+ };
+ let arr=JSON.parse(localStorage.getItem("clientes"))||[];
+ if(editIndex!==null){arr[editIndex]=cliente;editIndex=null;}
+ else arr.push(cliente);
+ localStorage.setItem("clientes",JSON.stringify(arr));
+ limpiar();cargar();
+}
+
+function editar(i){
+ let arr=JSON.parse(localStorage.getItem("clientes"));
+ let c=arr[i];
+ nombre.value=c.nombre;
+ ubicacion.value=c.ubicacion;
+ equipo.value=c.equipo;
+ telefono.value=c.telefono;
+ fecha.value=c.fecha;
+ obs.value=c.obs;
+ editIndex=i;
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function borrar(i){
+ let arr=JSON.parse(localStorage.getItem("clientes"));
+ arr.splice(i,1);
+ localStorage.setItem("clientes",JSON.stringify(arr));
+ cargar();
+}
+
+function cargar(){
+ lista.innerHTML="";
+ let arr=JSON.parse(localStorage.getItem("clientes"))||[];
+ arr.forEach((c,i)=>{
+  lista.innerHTML+=`
+  <li>
+   <b>${c.nombre}</b><br>
+   📍 ${c.ubicacion}<br>
+   ❄️ ${c.equipo}<br>
+   📞 ${c.telefono}<br>
+   📅 ${c.fecha||"—"}<br>
+   📝 ${c.obs}
+   <div class="actions">
+    <button class="edit" onclick="editar(${i})">Editar</button>
+    <button class="del" onclick="borrar(${i})">Borrar</button>
+   </div>
+  </li>`;
+ });
+}
+
+function limpiar(){
+ nombre.value=ubicacion.value=equipo.value=telefono.value=fecha.value=obs.value="";
+}
+</script>
+
+</body>
+</html>
