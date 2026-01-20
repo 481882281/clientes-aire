@@ -48,7 +48,9 @@ li{background:#f0f0f0;padding:14px;margin-top:14px;border-radius:14px;font-size:
 
 <script>
 const PIN="1234";
-const SHEETDB_URL = "AKfycbwtGs-2y_T4z6Ifm2AqwXrjjAN9CwUb5t65dVewhTAyt53fcp6C_m2sWTJ-ZsegBrVN";
+// Pone tu URL de Web App completo aquí
+const SHEETDB_URL = "https://script.google.com/macros/s/AKfycbwtGs-2y_T4z6Ifm2AqwXrjjAN9CwUb5t65dVewhTAyt53fcp6C_m2sWTJ-ZsegBrVN/exec";
+
 let editIndex = null;
 
 function entrar(){
@@ -69,26 +71,18 @@ function guardar(){
   obs: document.getElementById("obs").value
  };
 
- fetch(SHEETDB_URL)
-   .then(res => res.json())
-   .then(arr => {
-     if(editIndex!==null){
-       // Editamos usando el índice
-       const id = arr[editIndex]._row;
-       fetch(`${SHEETDB_URL}/${id}`, {
-         method:'PUT',
-         headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({data:cliente})
-       }).then(()=> {editIndex=null; limpiar(); cargar();});
-     } else {
-       // Nuevo cliente
-       fetch(SHEETDB_URL,{
-         method:'POST',
-         headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({data:cliente})
-       }).then(()=>{limpiar(); cargar();});
-     }
-   });
+ let action = editIndex !== null ? "edit" : "add";
+ let id = editIndex;
+
+ fetch(SHEETDB_URL, {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({ action: action, data: cliente, id: id })
+ }).then(()=> {
+   editIndex = null;
+   limpiar();
+   cargar();
+ });
 }
 
 function editar(index){
@@ -108,14 +102,12 @@ function editar(index){
 }
 
 function borrar(index){
- fetch(SHEETDB_URL)
-   .then(res=>res.json())
-   .then(arr=>{
-     const id = arr[index]._row;
-     if(confirm("¿Borrar este cliente?")){
-       fetch(`${SHEETDB_URL}/${id}`,{method:'DELETE'}).then(()=>cargar());
-     }
-   });
+ if(!confirm("¿Borrar este cliente?")) return;
+ fetch(SHEETDB_URL, {
+   method:"POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({ action: "delete", id: index })
+ }).then(()=>cargar());
 }
 
 function cargar(){
@@ -151,10 +143,9 @@ function limpiar(){
  document.getElementById("telefono").value="";
  document.getElementById("fecha").value="";
  document.getElementById("obs").value="";
- editIndex=null;
+ editIndex = null;
 }
 </script>
 
 </body>
 </html>
-
