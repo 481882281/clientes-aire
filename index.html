@@ -6,67 +6,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{box-sizing:border-box}
-body{
- font-family:Arial, sans-serif;
- background:#f2f2f2;
- padding:15px;
- margin:0;
-}
-h1{
- text-align:center;
- font-size:22px;
- margin-bottom:10px;
-}
-.box{
- background:white;
- padding:15px;
- border-radius:14px;
- max-width:520px;
- margin:auto;
- box-shadow:0 4px 10px rgba(0,0,0,.08);
-}
-input,textarea,button{
- width:100%;
- padding:14px;
- margin-top:10px;
- font-size:16px;
- border-radius:10px;
- border:1px solid #ccc;
-}
+body{font-family:Arial,sans-serif;background:#f2f2f2;padding:15px;margin:0}
+h1{text-align:center;font-size:22px;margin-bottom:10px}
+.box{background:white;padding:15px;border-radius:14px;max-width:520px;margin:auto;box-shadow:0 4px 10px rgba(0,0,0,.08)}
+input,textarea,button{width:100%;padding:14px;margin-top:10px;font-size:16px;border-radius:10px;border:1px solid #ccc}
 textarea{min-height:90px}
-button{
- border:none;
- font-weight:bold;
-}
+button{border:none;font-weight:bold}
 button:active{opacity:.85}
 #buscar{background:#fafafa}
 ul{list-style:none;padding:0;margin:0}
-li{
- background:#f0f0f0;
- padding:14px;
- margin-top:14px;
- border-radius:14px;
- font-size:15px;
- line-height:1.4;
-}
-.actions{
- display:flex;
- gap:10px;
- margin-top:12px;
-}
-.edit{
- background:#007bff;
- color:white;
-}
-.del{
- background:#e53935;
- color:white;
-}
-@media (max-width:480px){
- h1{font-size:20px}
- input,textarea,button{font-size:17px}
- li{font-size:16px}
-}
+li{background:#f0f0f0;padding:14px;margin-top:14px;border-radius:14px;font-size:15px;line-height:1.4}
+.actions{display:flex;gap:10px;margin-top:12px}
+.edit{background:#007bff;color:white}
+.del{background:#e53935;color:white}
+@media (max-width:480px){h1{font-size:20px}input,textarea,button{font-size:17px}li{font-size:16px}}
 </style>
 </head>
 <body>
@@ -95,9 +48,8 @@ li{
 
 <script>
 const PIN="1234";
-// Tu enlace de SheetDB
 const SHEETDB_URL = "https://sheetdb.io/api/v1/oolkguo1ucmi4";
-let editId = null;
+let editIndex = null;
 
 function entrar(){
  if(document.getElementById("pin").value===PIN){
@@ -117,74 +69,76 @@ function guardar(){
   obs: document.getElementById("obs").value
  };
 
- if(editId){
-   // Actualizar cliente existente
-   fetch(`${SHEETDB_URL}/${editId}`, {
-     method: 'PUT',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify({ data: cliente })
-   }).then(() => {
-     editId = null;
-     limpiar();
-     cargar();
-   });
- } else {
-   // Crear cliente nuevo
-   fetch(SHEETDB_URL, {
-     method: 'POST',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify({ data: cliente })
-   }).then(() => {
-     limpiar();
-     cargar();
-   });
- }
-}
-
-function editar(id){
- fetch(`${SHEETDB_URL}/${id}`)
+ fetch(SHEETDB_URL)
    .then(res => res.json())
    .then(arr => {
-     const c = arr[0];
+     if(editIndex!==null){
+       // Editamos usando el índice
+       const id = arr[editIndex]._row;
+       fetch(`${SHEETDB_URL}/${id}`, {
+         method:'PUT',
+         headers:{'Content-Type':'application/json'},
+         body:JSON.stringify({data:cliente})
+       }).then(()=> {editIndex=null; limpiar(); cargar();});
+     } else {
+       // Nuevo cliente
+       fetch(SHEETDB_URL,{
+         method:'POST',
+         headers:{'Content-Type':'application/json'},
+         body:JSON.stringify({data:cliente})
+       }).then(()=>{limpiar(); cargar();});
+     }
+   });
+}
+
+function editar(index){
+ fetch(SHEETDB_URL)
+   .then(res=>res.json())
+   .then(arr=>{
+     const c = arr[index];
      document.getElementById("nombre").value = c.nombre;
      document.getElementById("ubicacion").value = c.ubicacion;
      document.getElementById("equipo").value = c.equipo;
      document.getElementById("telefono").value = c.telefono;
      document.getElementById("fecha").value = c.fecha;
      document.getElementById("obs").value = c.obs;
-     editId = id;
+     editIndex = index;
      window.scrollTo({top:0,behavior:"smooth"});
    });
 }
 
-function borrar(id){
- if(!confirm("¿Borrar este cliente?")) return;
- fetch(`${SHEETDB_URL}/${id}`, { method: 'DELETE' })
-   .then(() => cargar());
+function borrar(index){
+ fetch(SHEETDB_URL)
+   .then(res=>res.json())
+   .then(arr=>{
+     const id = arr[index]._row;
+     if(confirm("¿Borrar este cliente?")){
+       fetch(`${SHEETDB_URL}/${id}`,{method:'DELETE'}).then(()=>cargar());
+     }
+   });
 }
 
 function cargar(){
  document.getElementById("lista").innerHTML="";
  fetch(SHEETDB_URL)
-   .then(res => res.json())
-   .then(arr => {
+   .then(res=>res.json())
+   .then(arr=>{
      const filtro = document.getElementById("buscar").value.toLowerCase();
-     arr.forEach(c => {
-       let texto = (c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
+     arr.forEach((c,i)=>{
+       let texto=(c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
        if(!texto.includes(filtro)) return;
-
        document.getElementById("lista").innerHTML += `
        <li>
-        <b>${c.nombre}</b><br>
-        📍 ${c.ubicacion}<br>
-        ❄️ ${c.equipo}<br>
-        📞 ${c.telefono}<br>
-        📅 ${c.fecha || "—"}<br>
-        📝 ${c.obs || ""}
-        <div class="actions">
-         <button class="edit" onclick="editar(${c.id})">Editar</button>
-         <button class="del" onclick="borrar(${c.id})">Borrar</button>
-        </div>
+         <b>${c.nombre}</b><br>
+         📍 ${c.ubicacion}<br>
+         ❄️ ${c.equipo}<br>
+         📞 ${c.telefono}<br>
+         📅 ${c.fecha || "—"}<br>
+         📝 ${c.obs || ""}
+         <div class="actions">
+           <button class="edit" onclick="editar(${i})">Editar</button>
+           <button class="del" onclick="borrar(${i})">Borrar</button>
+         </div>
        </li>`;
      });
    });
@@ -197,7 +151,7 @@ function limpiar(){
  document.getElementById("telefono").value="";
  document.getElementById("fecha").value="";
  document.getElementById("obs").value="";
- editId = null;
+ editIndex=null;
 }
 </script>
 
