@@ -39,11 +39,7 @@ button{
  font-weight:bold;
 }
 button:active{opacity:.85}
-
-#buscar{
- background:#fafafa;
-}
-
+#buscar{background:#fafafa}
 ul{list-style:none;padding:0;margin:0}
 li{
  background:#f0f0f0;
@@ -66,8 +62,6 @@ li{
  background:#e53935;
  color:white;
 }
-
-/* Optimizado iPhone */
 @media (max-width:480px){
  h1{font-size:20px}
  input,textarea,button{font-size:17px}
@@ -75,7 +69,6 @@ li{
 }
 </style>
 </head>
-
 <body>
 
 <h1>Clientes – Aire Acondicionado</h1>
@@ -86,7 +79,6 @@ li{
 </div>
 
 <div class="box" id="app" style="display:none">
-
 <input id="buscar" placeholder="🔍 Buscar cliente..." oninput="cargar()">
 
 <input id="nombre" placeholder="Nombre y apellido">
@@ -103,65 +95,54 @@ li{
 
 <script>
 const PIN="1234";
-let editIndex=null;
-
-// Reemplaza esto por tu enlace de SheetDB
+// Tu enlace de SheetDB
 const SHEETDB_URL = "https://sheetdb.io/api/v1/oolkguo1ucmi4";
 
 function entrar(){
- if(pin.value===PIN){
-  login.style.display="none";
-  app.style.display="block";
+ if(document.getElementById("pin").value===PIN){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
   cargar();
  } else alert("PIN incorrecto");
 }
 
 function guardar(){
- let cliente={
-  nombre:nombre.value,
-  ubicacion:ubicacion.value,
-  equipo:equipo.value,
-  telefono:telefono.value,
-  fecha:fecha.value,
-  obs:obs.value
+ let cliente = {
+  nombre: document.getElementById("nombre").value,
+  ubicacion: document.getElementById("ubicacion").value,
+  equipo: document.getElementById("equipo").value,
+  telefono: document.getElementById("telefono").value,
+  fecha: document.getElementById("fecha").value,
+  obs: document.getElementById("obs").value
  };
 
  fetch(SHEETDB_URL, {
    method: 'POST',
    headers: { 'Content-Type': 'application/json' },
    body: JSON.stringify({ data: cliente })
- })
- .then(res => {
+ }).then(() => {
    limpiar();
    cargar();
  });
 }
 
-function editar(i){
- // SheetDB no tiene index fijo, así que para editar lo ideal es borrar y volver a crear
- alert("Editar solo funciona desde tu Google Sheet por ahora.");
-}
-
-function borrar(i){
+function borrar(id){
  if(!confirm("¿Borrar este cliente?")) return;
-
- // SheetDB elimina usando el id del registro
- fetch(`${SHEETDB_URL}/${i+1}`, { method: 'DELETE' })
-   .then(res => cargar());
+ fetch(`${SHEETDB_URL}/${id}`, { method: 'DELETE' })
+   .then(() => cargar());
 }
 
 function cargar(){
- lista.innerHTML="";
- let filtro=buscar.value.toLowerCase();
-
+ document.getElementById("lista").innerHTML="";
  fetch(SHEETDB_URL)
    .then(res => res.json())
    .then(arr => {
-     arr.forEach((c,i)=>{
-       let texto=(c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
+     const filtro = document.getElementById("buscar").value.toLowerCase();
+     arr.forEach(c => {
+       let texto = (c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
        if(!texto.includes(filtro)) return;
 
-       lista.innerHTML+=`
+       document.getElementById("lista").innerHTML += `
        <li>
         <b>${c.nombre}</b><br>
         📍 ${c.ubicacion}<br>
@@ -170,8 +151,7 @@ function cargar(){
         📅 ${c.fecha || "—"}<br>
         📝 ${c.obs || ""}
         <div class="actions">
-         <button class="edit" onclick="editar(${i})">Editar</button>
-         <button class="del" onclick="borrar(${i})">Borrar</button>
+         <button class="del" onclick="borrar(${c.id})">Borrar</button>
         </div>
        </li>`;
      });
@@ -179,15 +159,14 @@ function cargar(){
 }
 
 function limpiar(){
- nombre.value="";
- ubicacion.value="";
- equipo.value="";
- telefono.value="";
- fecha.value="";
- obs.value="";
+ document.getElementById("nombre").value="";
+ document.getElementById("ubicacion").value="";
+ document.getElementById("equipo").value="";
+ document.getElementById("telefono").value="";
+ document.getElementById("fecha").value="";
+ document.getElementById("obs").value="";
 }
 </script>
 
 </body>
 </html>
-
