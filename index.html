@@ -105,6 +105,9 @@ li{
 const PIN="1234";
 let editIndex=null;
 
+// Reemplaza esto por tu enlace de SheetDB
+const SHEETDB_URL = "TU_ENLACE_SHEETDB";
+
 function entrar(){
  if(pin.value===PIN){
   login.style.display="none";
@@ -122,61 +125,57 @@ function guardar(){
   fecha:fecha.value,
   obs:obs.value
  };
- let arr=JSON.parse(localStorage.getItem("clientes"))||[];
- if(editIndex!==null){
-  arr[editIndex]=cliente;
-  editIndex=null;
- } else arr.push(cliente);
 
- localStorage.setItem("clientes",JSON.stringify(arr));
- limpiar();
- cargar();
+ fetch(SHEETDB_URL, {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ data: cliente })
+ })
+ .then(res => {
+   limpiar();
+   cargar();
+ });
 }
 
 function editar(i){
- let arr=JSON.parse(localStorage.getItem("clientes"));
- let c=arr[i];
- nombre.value=c.nombre;
- ubicacion.value=c.ubicacion;
- equipo.value=c.equipo;
- telefono.value=c.telefono;
- fecha.value=c.fecha;
- obs.value=c.obs;
- editIndex=i;
- window.scrollTo({top:0,behavior:"smooth"});
+ // SheetDB no tiene index fijo, así que para editar lo ideal es borrar y volver a crear
+ alert("Editar solo funciona desde tu Google Sheet por ahora.");
 }
 
 function borrar(i){
  if(!confirm("¿Borrar este cliente?")) return;
- let arr=JSON.parse(localStorage.getItem("clientes"));
- arr.splice(i,1);
- localStorage.setItem("clientes",JSON.stringify(arr));
- cargar();
+
+ // SheetDB elimina usando el id del registro
+ fetch(`${SHEETDB_URL}/${i+1}`, { method: 'DELETE' })
+   .then(res => cargar());
 }
 
 function cargar(){
  lista.innerHTML="";
  let filtro=buscar.value.toLowerCase();
- let arr=JSON.parse(localStorage.getItem("clientes"))||[];
 
- arr.forEach((c,i)=>{
-  let texto=(c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
-  if(!texto.includes(filtro)) return;
+ fetch(SHEETDB_URL)
+   .then(res => res.json())
+   .then(arr => {
+     arr.forEach((c,i)=>{
+       let texto=(c.nombre+" "+c.ubicacion+" "+c.equipo+" "+c.telefono).toLowerCase();
+       if(!texto.includes(filtro)) return;
 
-  lista.innerHTML+=`
-  <li>
-   <b>${c.nombre}</b><br>
-   📍 ${c.ubicacion}<br>
-   ❄️ ${c.equipo}<br>
-   📞 ${c.telefono}<br>
-   📅 ${c.fecha || "—"}<br>
-   📝 ${c.obs || ""}
-   <div class="actions">
-    <button class="edit" onclick="editar(${i})">Editar</button>
-    <button class="del" onclick="borrar(${i})">Borrar</button>
-   </div>
-  </li>`;
- });
+       lista.innerHTML+=`
+       <li>
+        <b>${c.nombre}</b><br>
+        📍 ${c.ubicacion}<br>
+        ❄️ ${c.equipo}<br>
+        📞 ${c.telefono}<br>
+        📅 ${c.fecha || "—"}<br>
+        📝 ${c.obs || ""}
+        <div class="actions">
+         <button class="edit" onclick="editar(${i})">Editar</button>
+         <button class="del" onclick="borrar(${i})">Borrar</button>
+        </div>
+       </li>`;
+     });
+   });
 }
 
 function limpiar(){
