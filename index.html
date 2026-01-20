@@ -97,6 +97,7 @@ li{
 const PIN="1234";
 // Tu enlace de SheetDB
 const SHEETDB_URL = "https://sheetdb.io/api/v1/oolkguo1ucmi4";
+let editId = null;
 
 function entrar(){
  if(document.getElementById("pin").value===PIN){
@@ -116,14 +117,44 @@ function guardar(){
   obs: document.getElementById("obs").value
  };
 
- fetch(SHEETDB_URL, {
-   method: 'POST',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ data: cliente })
- }).then(() => {
-   limpiar();
-   cargar();
- });
+ if(editId){
+   // Actualizar cliente existente
+   fetch(`${SHEETDB_URL}/${editId}`, {
+     method: 'PUT',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ data: cliente })
+   }).then(() => {
+     editId = null;
+     limpiar();
+     cargar();
+   });
+ } else {
+   // Crear cliente nuevo
+   fetch(SHEETDB_URL, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ data: cliente })
+   }).then(() => {
+     limpiar();
+     cargar();
+   });
+ }
+}
+
+function editar(id){
+ fetch(`${SHEETDB_URL}/${id}`)
+   .then(res => res.json())
+   .then(arr => {
+     const c = arr[0];
+     document.getElementById("nombre").value = c.nombre;
+     document.getElementById("ubicacion").value = c.ubicacion;
+     document.getElementById("equipo").value = c.equipo;
+     document.getElementById("telefono").value = c.telefono;
+     document.getElementById("fecha").value = c.fecha;
+     document.getElementById("obs").value = c.obs;
+     editId = id;
+     window.scrollTo({top:0,behavior:"smooth"});
+   });
 }
 
 function borrar(id){
@@ -151,6 +182,7 @@ function cargar(){
         📅 ${c.fecha || "—"}<br>
         📝 ${c.obs || ""}
         <div class="actions">
+         <button class="edit" onclick="editar(${c.id})">Editar</button>
          <button class="del" onclick="borrar(${c.id})">Borrar</button>
         </div>
        </li>`;
@@ -165,6 +197,7 @@ function limpiar(){
  document.getElementById("telefono").value="";
  document.getElementById("fecha").value="";
  document.getElementById("obs").value="";
+ editId = null;
 }
 </script>
 
